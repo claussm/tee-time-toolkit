@@ -98,6 +98,16 @@ const Index = () => {
                   Players
                 </Button>
               </NavLink>
+              <NavLink to="/teams">
+                <Button variant="outline" size="sm">
+                  Teams
+                </Button>
+              </NavLink>
+              <NavLink to="/statistics">
+                <Button variant="outline" size="sm">
+                  Stats
+                </Button>
+              </NavLink>
               <Button size="sm" onClick={() => setEventDialogOpen(true)}>
                 <Plus className="mr-1 h-3 w-3" />
                 Event

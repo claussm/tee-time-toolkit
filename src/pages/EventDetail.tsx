@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Lock, Unlock, FileText } from "lucide-react";
 import { EventPlayersList } from "@/components/EventPlayersList";
 import { TeeSheet } from "@/components/TeeSheet";
+import { EventScoring } from "@/components/EventScoring";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -163,9 +164,10 @@ const EventDetail = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="print:hidden">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="players">Players</TabsTrigger>
             <TabsTrigger value="teesheet">Tee Sheet</TabsTrigger>
+            <TabsTrigger value="scoring">Scoring</TabsTrigger>
           </TabsList>
 
           <TabsContent value="players" className="mt-6">
@@ -187,6 +189,10 @@ const EventDetail = () => {
               isLocked={event.is_locked}
               slotsPerGroup={event.slots_per_group}
             />
+          </TabsContent>
+
+          <TabsContent value="scoring" className="mt-6">
+            <EventScoring eventId={id!} />
           </TabsContent>
         </Tabs>
 

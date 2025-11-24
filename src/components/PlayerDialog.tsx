@@ -1,11 +1,12 @@
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
 interface PlayerDialogProps {
@@ -16,8 +17,34 @@ interface PlayerDialogProps {
 
 export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) => {
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset } = useForm({
+  const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: player || {},
+  });
+
+  const { data: teeBoxes } = useQuery({
+    queryKey: ["tee_boxes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tee_boxes")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: teams } = useQuery({
+    queryKey: ["teams_active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("player_teams")
+        .select("*")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const saveMutation = useMutation({
@@ -75,6 +102,58 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
               step="0.1"
               {...register("handicap")}
             />
+          </div>
+
+          <div>
+            <Label htmlFor="tee_box_id">Tee Box</Label>
+            <Select
+              value={watch("tee_box_id") || ""}
+              onValueChange={(value) => setValue("tee_box_id", value || null)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select tee box" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {teeBoxes?.map((teeBox) => (
+                  <SelectItem key={teeBox.id} value={teeBox.id}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded"
+                        style={{ backgroundColor: teeBox.color || "#ccc" }}
+                      />
+                      {teeBox.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="default_team_id">Default Team</Label>
+            <Select
+              value={watch("default_team_id") || ""}
+              onValueChange={(value) => setValue("default_team_id", value || null)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select team" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None</SelectItem>
+                {teams?.map((team) => (
+                  <SelectItem key={team.id} value={team.id}>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded"
+                        style={{ backgroundColor: team.color || "#3B82F6" }}
+                      />
+                      {team.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
