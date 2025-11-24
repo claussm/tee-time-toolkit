@@ -19,7 +19,14 @@ const Players = () => {
   const { data: players, isLoading } = useQuery({
     queryKey: ["players", showActiveOnly],
     queryFn: async () => {
-      let query = supabase.from("players").select("*").order("name");
+      let query = supabase
+        .from("players")
+        .select(`
+          *,
+          tee_boxes (*),
+          player_teams!players_default_team_id_fkey (*)
+        `)
+        .order("name");
       
       if (showActiveOnly) {
         query = query.eq("is_active", true);

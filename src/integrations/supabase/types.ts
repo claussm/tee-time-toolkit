@@ -67,9 +67,11 @@ export type Database = {
           is_locked: boolean
           max_players: number
           notes: string | null
+          points_multiplier: number
           signup_deadline: string | null
           slots_per_group: number
           tee_interval_minutes: number
+          track_points: boolean
           updated_at: string
         }
         Insert: {
@@ -82,9 +84,11 @@ export type Database = {
           is_locked?: boolean
           max_players?: number
           notes?: string | null
+          points_multiplier?: number
           signup_deadline?: string | null
           slots_per_group?: number
           tee_interval_minutes?: number
+          track_points?: boolean
           updated_at?: string
         }
         Update: {
@@ -97,9 +101,11 @@ export type Database = {
           is_locked?: boolean
           max_players?: number
           notes?: string | null
+          points_multiplier?: number
           signup_deadline?: string | null
           slots_per_group?: number
           tee_interval_minutes?: number
+          track_points?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -175,9 +181,76 @@ export type Database = {
           },
         ]
       }
+      player_team_members: {
+        Row: {
+          id: string
+          joined_at: string
+          player_id: string
+          team_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          player_id: string
+          team_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          player_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_team_members_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "player_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_teams: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       players: {
         Row: {
           created_at: string
+          default_team_id: string | null
           email: string | null
           handicap: number | null
           id: string
@@ -185,10 +258,12 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          tee_box_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          default_team_id?: string | null
           email?: string | null
           handicap?: number | null
           id?: string
@@ -196,10 +271,12 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          tee_box_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          default_team_id?: string | null
           email?: string | null
           handicap?: number | null
           id?: string
@@ -207,7 +284,95 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          tee_box_id?: string | null
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_default_team_id_fkey"
+            columns: ["default_team_id"]
+            isOneToOne: false
+            referencedRelation: "player_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_tee_box_id_fkey"
+            columns: ["tee_box_id"]
+            isOneToOne: false
+            referencedRelation: "tee_boxes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      round_scores: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          notes: string | null
+          player_id: string
+          points: number
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          notes?: string | null
+          player_id: string
+          points: number
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          notes?: string | null
+          player_id?: string
+          points?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_scores_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "round_scores_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tee_boxes: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          typical_yardage: number | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          typical_yardage?: number | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          typical_yardage?: number | null
         }
         Relationships: []
       }
