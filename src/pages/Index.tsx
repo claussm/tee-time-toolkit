@@ -1,17 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Users, Calendar, TrendingUp, LogOut } from "lucide-react";
-import { NavLink } from "@/components/NavLink";
+import { Plus, Users, Calendar } from "lucide-react";
 import { EventDialog } from "@/components/EventDialog";
 import { format } from "date-fns";
 import heroImage from "@/assets/golf-hero.jpg";
 
 const Index = () => {
-  const { signOut, user } = useAuth();
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
 
   const { data: players } = useQuery({
@@ -46,7 +43,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="relative h-80 overflow-hidden">
+      <div className="relative h-64 overflow-hidden">
         <img
           src={heroImage}
           alt="Golf course at sunrise"
@@ -54,25 +51,19 @@ const Index = () => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8">
-          <div className="container mx-auto flex items-end justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-primary-foreground mb-2">
-                Golf League Manager
-              </h1>
-              <p className="text-lg text-primary-foreground/90">
-                Organize players, events, and tee times with ease
-              </p>
-            </div>
-            <Button variant="outline" onClick={signOut} className="bg-background/10 backdrop-blur-sm border-primary-foreground/20 text-primary-foreground hover:bg-background/20">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+          <div className="container mx-auto">
+            <h1 className="text-4xl font-bold text-primary-foreground mb-2">
+              Golf League Manager
+            </h1>
+            <p className="text-lg text-primary-foreground/90">
+              Organize players, events, and tee times with ease
+            </p>
           </div>
         </div>
       </div>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Players</CardTitle>
@@ -94,34 +85,6 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted" />
-            </CardHeader>
-            <CardContent className="flex gap-2">
-              <NavLink to="/players">
-                <Button variant="outline" size="sm">
-                  Players
-                </Button>
-              </NavLink>
-              <NavLink to="/teams">
-                <Button variant="outline" size="sm">
-                  Teams
-                </Button>
-              </NavLink>
-              <NavLink to="/statistics">
-                <Button variant="outline" size="sm">
-                  Stats
-                </Button>
-              </NavLink>
-              <Button size="sm" onClick={() => setEventDialogOpen(true)}>
-                <Plus className="mr-1 h-3 w-3" />
-                Event
-              </Button>
-            </CardContent>
-          </Card>
         </div>
 
         <Card>
@@ -136,7 +99,7 @@ const Index = () => {
             {upcomingEvents && upcomingEvents.length > 0 ? (
               <div className="space-y-4">
                 {upcomingEvents.map((event) => (
-                  <NavLink key={event.id} to={`/events/${event.id}`}>
+                  <a key={event.id} href={`/events/${event.id}`} className="block">
                     <div className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
                       <div>
                         <h3 className="font-semibold text-foreground">
@@ -155,7 +118,7 @@ const Index = () => {
                         </p>
                       </div>
                     </div>
-                  </NavLink>
+                  </a>
                 ))}
               </div>
             ) : (
