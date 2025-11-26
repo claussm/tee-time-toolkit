@@ -23,6 +23,41 @@ const Index = () => {
     },
   });
 
+  const { data: pointsLeader } = useQuery({
+    queryKey: ["points_leader"],
+    queryFn: async () => {
+      const { data: players, error: playersError } = await supabase
+        .from("players")
+        .select("id, name")
+        .eq("is_active", true);
+      if (playersError) throw playersError;
+
+      const statsPromises = players.map(async (player) => {
+        const { data: scores, error: scoresError } = await supabase
+          .from("round_scores")
+          .select("points")
+          .eq("player_id", player.id)
+          .order("created_at", { ascending: false })
+          .limit(6);
+        if (scoresError) throw scoresError;
+
+        if (scores.length === 0) return null;
+        
+        const totalPoints = scores.reduce((sum, s) => sum + Number(s.points), 0);
+        const average = totalPoints / scores.length;
+
+        return {
+          ...player,
+          average,
+        };
+      });
+
+      const stats = (await Promise.all(statsPromises)).filter(s => s !== null);
+      const sorted = stats.sort((a, b) => (b?.average || 0) - (a?.average || 0));
+      return sorted[0] || null;
+    },
+  });
+
   const { data: upcomingEvents } = useQuery({
     queryKey: ["upcoming_events"],
     queryFn: async () => {
@@ -76,13 +111,20 @@ const Index = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-              <Calendar className="h-4 w-4 text-muted" />
+              <CardTitle className="text-sm font-medium">Points Leader</CardTitle>
+              <Users className="h-4 w-4 text-muted" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                {upcomingEvents?.length || 0}
-              </div>
+              {pointsLeader ? (
+                <div>
+                  <div className="text-2xl font-bold text-foreground">{pointsLeader.name}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {pointsLeader.average.toFixed(2)} avg
+                  </p>
+                </div>
+              ) : (
+                <div className="text-2xl font-bold text-muted-foreground">-</div>
+              )}
             </CardContent>
           </Card>
         </div>
