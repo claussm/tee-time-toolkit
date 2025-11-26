@@ -80,7 +80,7 @@ const Index = () => {
         <div className="absolute bottom-0 left-0 right-0 p-8">
           <div className="container mx-auto">
             <h1 className="text-4xl font-bold text-primary-foreground mb-2">
-              Golf League Manager
+              Barefoot Tees 
             </h1>
             <p className="text-lg text-primary-foreground/90">
               Organize players, events, and tee times with ease
