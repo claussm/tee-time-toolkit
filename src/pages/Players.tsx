@@ -56,19 +56,7 @@ const Players = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">Player Management</h1>
-            <NavLink to="/">
-              <Button variant="outline">Back to Dashboard</Button>
-            </NavLink>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
@@ -107,12 +95,11 @@ const Players = () => {
           onDeactivate={(id) => deleteMutation.mutate(id)}
         />
 
-        <PlayerDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          player={editingPlayer}
-        />
-      </main>
+      <PlayerDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        player={editingPlayer}
+      />
     </div>
   );
 };

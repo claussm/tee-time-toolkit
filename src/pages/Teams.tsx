@@ -77,23 +77,7 @@ export default function Teams() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4 mb-4">
-            <Users className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Team Management</h1>
-          </div>
-          <nav className="flex gap-4">
-            <NavLink to="/" className="text-muted-foreground hover:text-foreground">Events</NavLink>
-            <NavLink to="/players" className="text-muted-foreground hover:text-foreground">Players</NavLink>
-            <NavLink to="/teams" className="text-foreground font-medium border-b-2 border-primary">Teams</NavLink>
-            <NavLink to="/statistics" className="text-muted-foreground hover:text-foreground">Statistics</NavLink>
-          </nav>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <Input
             placeholder="Search teams..."
@@ -120,12 +104,11 @@ export default function Teams() {
           onDeactivate={handleDeactivate}
         />
 
-        <TeamDialog
-          open={isDialogOpen}
-          onOpenChange={handleDialogClose}
-          team={editingTeam}
-        />
-      </main>
+      <TeamDialog
+        open={isDialogOpen}
+        onOpenChange={handleDialogClose}
+        team={editingTeam}
+      />
     </div>
   );
 }
