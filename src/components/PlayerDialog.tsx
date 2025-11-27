@@ -202,7 +202,6 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
                 <Controller
                   name="is_active"
                   control={control}
-                  defaultValue={true}
                   render={({ field }) => (
                     <Switch
                       id="is_active"
