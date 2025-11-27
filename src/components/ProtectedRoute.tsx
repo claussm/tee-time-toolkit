@@ -24,7 +24,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to="/auth" replace />;
   }
 
-  if (requiredRole && role !== requiredRole) {
+  if (requiredRole && role !== 'admin' && role !== requiredRole) {
     return <Navigate to={role === 'scorer' ? '/scorer' : '/'} replace />;
   }
 
