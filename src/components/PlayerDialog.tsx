@@ -61,15 +61,18 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
 
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log('Saving to database:', data);
+      // Remove joined relation data that aren't actual columns
+      const { tee_boxes, player_teams, ...playerData } = data;
+      console.log('Saving to database:', playerData);
+      
       if (player) {
         const { error } = await supabase
           .from("players")
-          .update(data)
+          .update(playerData)
           .eq("id", player.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("players").insert(data);
+        const { error } = await supabase.from("players").insert(playerData);
         if (error) throw error;
       }
     },
