@@ -8,7 +8,6 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import Index from "./pages/Index";
 import Players from "./pages/Players";
-import Teams from "./pages/Teams";
 import Statistics from "./pages/Statistics";
 import EventDetail from "./pages/EventDetail";
 import Auth from "./pages/Auth";
@@ -42,16 +41,6 @@ const App = () => (
                 <ProtectedRoute requiredRole="admin">
                   <AppLayout>
                     <Players />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/teams"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <AppLayout>
-                    <Teams />
                   </AppLayout>
                 </ProtectedRoute>
               }
