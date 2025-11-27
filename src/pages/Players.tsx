@@ -95,7 +95,7 @@ const Players = () => {
           </div>
 
           <div className="flex gap-2">
-            <Button variant={showActiveOnly ? "default" : "outline"} onClick={() => setShowActiveOnly(!showActiveOnly)} className="bg-sidebar text-muted-foreground border-sidebar-primary">
+            <Button variant="outline" onClick={() => setShowActiveOnly(!showActiveOnly)} className="bg-sidebar text-muted-foreground border-sidebar-primary">
               {showActiveOnly ? "Active Only" : "All"}
             </Button>
             <Button onClick={() => {
