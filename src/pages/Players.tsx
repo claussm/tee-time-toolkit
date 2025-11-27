@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Search } from "lucide-react";
 import { PlayerDialog } from "@/components/PlayerDialog";
 import { PlayersTable } from "@/components/PlayersTable";
@@ -14,6 +15,8 @@ const Players = () => {
   const [showActiveOnly, setShowActiveOnly] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<any>(null);
+  const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [playerToDeactivate, setPlayerToDeactivate] = useState<any>(null);
   const queryClient = useQueryClient();
 
   const { data: players, isLoading } = useQuery({
@@ -60,6 +63,30 @@ const Players = () => {
     },
   });
 
+  const handleToggleStatus = (player: any, newStatus: boolean) => {
+    if (!newStatus && player.is_active) {
+      // Deactivating - show confirmation
+      setPlayerToDeactivate(player);
+      setShowDeactivateDialog(true);
+    } else if (newStatus && !player.is_active) {
+      // Reactivating - no confirmation needed
+      reactivateMutation.mutate(player.id);
+    }
+  };
+
+  const handleConfirmDeactivate = () => {
+    if (playerToDeactivate) {
+      deleteMutation.mutate(playerToDeactivate.id);
+      setShowDeactivateDialog(false);
+      setPlayerToDeactivate(null);
+    }
+  };
+
+  const handleCancelDeactivate = () => {
+    setShowDeactivateDialog(false);
+    setPlayerToDeactivate(null);
+  };
+
   const filteredPlayers = players?.filter((player) =>
     player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     player.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,6 +132,7 @@ const Players = () => {
           }}
           onDeactivate={(id) => deleteMutation.mutate(id)}
           onReactivate={(id) => reactivateMutation.mutate(id)}
+          onToggleStatus={handleToggleStatus}
         />
 
       <PlayerDialog
@@ -112,6 +140,21 @@ const Players = () => {
         onOpenChange={setDialogOpen}
         player={editingPlayer}
       />
+
+      <AlertDialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate Player?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to deactivate {playerToDeactivate?.name}? This player will no longer appear in the active players list, but their data and history will be preserved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDeactivate}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeactivate}>Deactivate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

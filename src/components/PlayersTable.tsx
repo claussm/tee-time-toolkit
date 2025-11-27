@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { Edit, Trash2, RefreshCw } from "lucide-react";
 
 interface PlayersTableProps {
@@ -8,9 +9,10 @@ interface PlayersTableProps {
   onEdit: (player: any) => void;
   onDeactivate: (id: string) => void;
   onReactivate: (id: string) => void;
+  onToggleStatus: (player: any, newStatus: boolean) => void;
 }
 
-export const PlayersTable = ({ players, isLoading, onEdit, onDeactivate, onReactivate }: PlayersTableProps) => {
+export const PlayersTable = ({ players, isLoading, onEdit, onDeactivate, onReactivate, onToggleStatus }: PlayersTableProps) => {
   if (isLoading) {
     return <div className="text-center py-8 text-muted">Loading players...</div>;
   }
@@ -73,9 +75,15 @@ export const PlayersTable = ({ players, isLoading, onEdit, onDeactivate, onReact
                 )}
               </TableCell>
               <TableCell>
-                <span className={player.is_active ? "text-primary" : "text-muted"}>
-                  {player.is_active ? "Active" : "Inactive"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={player.is_active}
+                    onCheckedChange={(checked) => onToggleStatus(player, checked)}
+                  />
+                  <span className={player.is_active ? "text-foreground" : "text-muted-foreground"}>
+                    {player.is_active ? "Active" : "Inactive"}
+                  </span>
+                </div>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
