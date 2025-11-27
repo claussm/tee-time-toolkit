@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PlayerPointsDialog } from "./PlayerPointsDialog";
+import { cn } from "@/lib/utils";
 
 type SortField = "name" | "average" | "roundsPlayed";
 type SortOrder = "asc" | "desc";
@@ -73,6 +74,31 @@ export function PlayerLeaderboard({ playerStats, teams, isLoading }: PlayerLeade
     
     return rankMap;
   }, [playerStats]);
+
+  const getRankStyle = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return {
+          bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
+          badgeColor: "bg-yellow-500 text-white border-yellow-600",
+          label: "🥇"
+        };
+      case 2:
+        return {
+          bgColor: "bg-gray-100 dark:bg-gray-800/40",
+          badgeColor: "bg-gray-400 text-white border-gray-500",
+          label: "🥈"
+        };
+      case 3:
+        return {
+          bgColor: "bg-orange-50 dark:bg-orange-900/20",
+          badgeColor: "bg-orange-600 text-white border-orange-700",
+          label: "🥉"
+        };
+      default:
+        return null;
+    }
+  };
 
   const filteredAndSortedStats = useMemo(() => {
     let filtered = playerStats;
@@ -198,9 +224,28 @@ export function PlayerLeaderboard({ playerStats, teams, isLoading }: PlayerLeade
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAndSortedStats.map((player, index) => (
-                <TableRow key={player.id} className="hover:bg-muted/50 cursor-pointer">
-                  <TableCell className="font-medium">#{playerRankings.get(player.id)}</TableCell>
+              filteredAndSortedStats.map((player, index) => {
+                const rank = playerRankings.get(player.id) || 0;
+                const style = getRankStyle(rank);
+                
+                return (
+                  <TableRow 
+                    key={player.id} 
+                    className={cn(
+                      "hover:bg-muted/50 cursor-pointer",
+                      style?.bgColor
+                    )}
+                  >
+                    <TableCell className="font-medium">
+                      {style ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-lg">{style.label}</span>
+                          <Badge className={style.badgeColor}>#{rank}</Badge>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">#{rank}</span>
+                      )}
+                    </TableCell>
                   <TableCell className="font-medium">{player.name}</TableCell>
                   {teams && teams.length > 0 && (
                     <TableCell>
@@ -233,7 +278,8 @@ export function PlayerLeaderboard({ playerStats, teams, isLoading }: PlayerLeade
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>
