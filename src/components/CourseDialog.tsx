@@ -50,8 +50,33 @@ export function CourseDialog({ open, onOpenChange, course }: CourseDialogProps) 
           .eq("id", course.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("courses").insert(data);
+        const { data: newCourse, error } = await supabase
+          .from("courses")
+          .insert(data)
+          .select()
+          .single();
         if (error) throw error;
+
+        // Auto-create standard tees for new course
+        if (newCourse) {
+          const standardTees = [
+            { name: "Platinum", color: "#E5E7EB", sort_order: 0 },
+            { name: "Black", color: "#000000", sort_order: 1 },
+            { name: "White", color: "#FFFFFF", sort_order: 2 },
+            { name: "Green", color: "#22C55E", sort_order: 3 },
+            { name: "Gold", color: "#EAB308", sort_order: 4 },
+          ];
+
+          const teesToInsert = standardTees.map(tee => ({
+            ...tee,
+            course_id: newCourse.id,
+          }));
+
+          const { error: teesError } = await supabase
+            .from("course_tees")
+            .insert(teesToInsert);
+          if (teesError) throw teesError;
+        }
       }
     },
     onSuccess: () => {
