@@ -23,7 +23,7 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
       holes: 18,
       slots_per_group: 4,
       max_players: 40,
-      tee_interval_minutes: 10,
+      tee_interval_minutes: 8,
     },
   });
 
@@ -76,7 +76,7 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
         const [hours, minutes] = data.first_tee_time.split(":").map(Number);
         
         for (let i = 0; i < numGroups; i++) {
-          const totalMinutes = hours * 60 + minutes + i * data.tee_interval_minutes;
+          const totalMinutes = hours * 60 + minutes + i * 8;
           const teeHours = Math.floor(totalMinutes / 60);
           const teeMinutes = totalMinutes % 60;
           const teeTime = `${String(teeHours).padStart(2, "0")}:${String(teeMinutes).padStart(2, "0")}:00`;
@@ -147,31 +147,20 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="holes">Holes *</Label>
-              <Select
-                value={String(holes)}
-                onValueChange={(value) => setValue("holes", Number(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="9">9 holes</SelectItem>
-                  <SelectItem value="18">18 holes</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="tee_interval_minutes">Tee Interval (min) *</Label>
-              <Input
-                id="tee_interval_minutes"
-                type="number"
-                {...register("tee_interval_minutes", { required: true, valueAsNumber: true })}
-              />
-            </div>
+          <div>
+            <Label htmlFor="holes">Holes *</Label>
+            <Select
+              value={String(holes)}
+              onValueChange={(value) => setValue("holes", Number(value))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="9">9 holes</SelectItem>
+                <SelectItem value="18">18 holes</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
