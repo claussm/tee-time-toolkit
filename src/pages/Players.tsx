@@ -49,6 +49,8 @@ const Players = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["players"] });
       toast.success("Player deactivated successfully");
+      setShowDeactivateDialog(false);
+      setPlayerToDeactivate(null);
     },
   });
 
@@ -63,22 +65,14 @@ const Players = () => {
     },
   });
 
-  const handleToggleStatus = (player: any, newStatus: boolean) => {
-    if (!newStatus && player.is_active) {
-      // Deactivating - show confirmation
-      setPlayerToDeactivate(player);
-      setShowDeactivateDialog(true);
-    } else if (newStatus && !player.is_active) {
-      // Reactivating - no confirmation needed
-      reactivateMutation.mutate(player.id);
-    }
+  const handleDeactivateClick = (player: any) => {
+    setPlayerToDeactivate(player);
+    setShowDeactivateDialog(true);
   };
 
   const handleConfirmDeactivate = () => {
     if (playerToDeactivate) {
       deleteMutation.mutate(playerToDeactivate.id);
-      setShowDeactivateDialog(false);
-      setPlayerToDeactivate(null);
     }
   };
 
@@ -130,9 +124,8 @@ const Players = () => {
             setEditingPlayer(player);
             setDialogOpen(true);
           }}
-          onDeactivate={(id) => deleteMutation.mutate(id)}
+          onDeactivate={handleDeactivateClick}
           onReactivate={(id) => reactivateMutation.mutate(id)}
-          onToggleStatus={handleToggleStatus}
         />
 
       <PlayerDialog
