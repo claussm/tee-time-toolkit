@@ -85,8 +85,8 @@ export function PlayerLeaderboard({ playerStats, teams, isLoading }: PlayerLeade
         };
       case 2:
         return {
-          bgColor: "bg-gray-100 dark:bg-gray-800/40",
-          badgeColor: "bg-gray-400 text-white border-gray-500",
+          bgColor: "bg-slate-100 dark:bg-slate-800/50",
+          badgeColor: "bg-slate-500 text-white border-slate-600",
           label: "🥈"
         };
       case 3:
