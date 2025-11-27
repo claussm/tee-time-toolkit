@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { title: "Events", url: "/", icon: Home },
   { title: "Players", url: "/players", icon: Users },
-  { title: "Teams", url: "/teams", icon: Shield },
   { title: "Statistics", url: "/statistics", icon: TrendingUp },
 ];
 
