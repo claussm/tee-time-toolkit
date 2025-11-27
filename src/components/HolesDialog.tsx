@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,6 +20,7 @@ interface HolesDialogProps {
 export function HolesDialog({ open, onOpenChange, course }: HolesDialogProps) {
   const queryClient = useQueryClient();
   const [holes, setHoles] = useState<any[]>([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const { data: existingHoles } = useQuery({
     queryKey: ["course_holes", course.id],
@@ -84,77 +85,103 @@ export function HolesDialog({ open, onOpenChange, course }: HolesDialogProps) {
     setHoles(newHoles);
   };
 
+  const handleSaveClick = () => {
+    setShowConfirmation(true);
+  };
+
+  const handleConfirm = () => {
+    saveMutation.mutate();
+    setShowConfirmation(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Manage Holes - {course.name}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Holes - {course.name}</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Configure each hole's par, handicap index, and mark par 3s for "Closest to Pin" bets
-          </p>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Configure each hole's par, handicap index, and mark par 3s for "Closest to Pin" bets
+            </p>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16">Hole</TableHead>
-                <TableHead className="w-24">Par</TableHead>
-                <TableHead className="w-32">Handicap Index</TableHead>
-                <TableHead>CTP Eligible</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {holes.map((hole, index) => (
-                <TableRow key={hole.hole_number}>
-                  <TableCell className="font-semibold">{hole.hole_number}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={hole.par?.toString()}
-                      onValueChange={(value) => updateHole(index, "par", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="4">4</SelectItem>
-                        <SelectItem value="5">5</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="18"
-                      value={hole.handicap_index || ""}
-                      onChange={(e) => updateHole(index, "handicap_index", e.target.value)}
-                      placeholder="-"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Checkbox
-                      checked={hole.is_ctp_hole}
-                      onCheckedChange={(checked) => updateHole(index, "is_ctp_hole", checked)}
-                    />
-                  </TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">Hole</TableHead>
+                  <TableHead className="w-24">Par</TableHead>
+                  <TableHead className="w-32">Handicap Index</TableHead>
+                  <TableHead>CTP Eligible</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {holes.map((hole, index) => (
+                  <TableRow key={hole.hole_number}>
+                    <TableCell className="font-semibold">{hole.hole_number}</TableCell>
+                    <TableCell>
+                      <Select
+                        value={hole.par?.toString()}
+                        onValueChange={(value) => updateHole(index, "par", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">3</SelectItem>
+                          <SelectItem value="4">4</SelectItem>
+                          <SelectItem value="5">5</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="18"
+                        value={hole.handicap_index || ""}
+                        onChange={(e) => updateHole(index, "handicap_index", e.target.value)}
+                        placeholder="-"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={hole.is_ctp_hole}
+                        onCheckedChange={(checked) => updateHole(index, "is_ctp_hole", checked)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
 
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
-              Save All Holes
-            </Button>
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveClick} disabled={saveMutation.isPending}>
+                Save All Holes
+              </Button>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Hole Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to save changes to all 18 holes? This will update the course hole configuration.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
