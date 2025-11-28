@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlayerPointsDialog } from "./PlayerPointsDialog";
 import { cn } from "@/lib/utils";
 
-type SortField = "name" | "average" | "roundsPlayed";
+type SortField = "name" | "average";
 type SortOrder = "asc" | "desc";
 
 interface PlayerStat {
@@ -203,16 +203,6 @@ export function PlayerLeaderboard({ playerStats, teams, isLoading }: PlayerLeade
                 </Button>
               </TableHead>
               {teams && teams.length > 0 && <TableHead>Team</TableHead>}
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("roundsPlayed")}
-                  className="hover:bg-muted/50 px-2"
-                >
-                  Rounds
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
               <TableHead className="text-right">
                 <Button
                   variant="ghost"
@@ -229,7 +219,7 @@ export function PlayerLeaderboard({ playerStats, teams, isLoading }: PlayerLeade
           <TableBody>
             {filteredAndSortedStats.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={teams && teams.length > 0 ? 6 : 5} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={teams && teams.length > 0 ? 5 : 4} className="text-center py-8 text-muted-foreground">
                   No players found
                 </TableCell>
               </TableRow>
@@ -272,9 +262,6 @@ export function PlayerLeaderboard({ playerStats, teams, isLoading }: PlayerLeade
                       )}
                     </TableCell>
                   )}
-                  <TableCell>
-                    <Badge variant="outline">{player.roundsPlayed}</Badge>
-                  </TableCell>
                   <TableCell className="text-right font-semibold">
                     {player.average}
                   </TableCell>
