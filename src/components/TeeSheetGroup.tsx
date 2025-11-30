@@ -1,4 +1,4 @@
-import { useSortable } from "@dnd-kit/sortable";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,33 +124,48 @@ interface TeeSheetSlotProps {
 }
 
 const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove }: TeeSheetSlotProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: assignment ? assignment.player_id : `slot-${groupId}-${position}`,
+  // Droppable slot
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `slot-${groupId}-${position}`,
+    disabled: isLocked,
+  });
+
+  // Draggable player (if assigned)
+  const { 
+    attributes, 
+    listeners, 
+    setNodeRef: setDraggableRef, 
+    transform, 
+    isDragging 
+  } = useDraggable({
+    id: assignment?.player_id || `empty-${groupId}-${position}`,
     disabled: isLocked || !assignment,
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+  const draggableStyle = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     opacity: isDragging ? 0.5 : 1,
   };
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
+      ref={setDroppableRef}
       id={`slot-${groupId}-${position}`}
       className={`
-        min-h-[2.5rem] px-3 py-2 rounded border
+        min-h-[2.5rem] px-3 py-2 rounded border transition-colors
         ${assignment ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-dashed border-border"}
-        ${!isLocked && assignment ? "cursor-move" : ""}
+        ${isOver && !isLocked ? "border-primary bg-primary/10" : ""}
         flex items-center justify-between
       `}
-      {...attributes}
-      {...listeners}
     >
       {assignment ? (
-        <>
+        <div
+          ref={setDraggableRef}
+          style={draggableStyle}
+          className={`flex items-center justify-between flex-1 ${!isLocked ? "cursor-move" : ""}`}
+          {...attributes}
+          {...listeners}
+        >
           <span className="text-sm font-medium text-foreground">
             {assignment.players?.name}
           </span>
@@ -167,7 +182,7 @@ const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove }: Tee
               <X className="h-3 w-3" />
             </Button>
           )}
-        </>
+        </div>
       ) : (
         <span className="text-sm text-muted">Empty</span>
       )}
