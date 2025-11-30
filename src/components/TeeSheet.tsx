@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors, useDraggable } from "@dnd-kit/core";
 import { TeeSheetGroup } from "./TeeSheetGroup";
 import { toast } from "sonner";
 
@@ -110,12 +109,11 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
           <h3 className="font-semibold mb-3 text-foreground">Unassigned Players</h3>
           <div className="flex flex-wrap gap-2">
             {unassignedPlayers.map((ep) => (
-              <div
-                key={ep.player_id}
-                className="px-3 py-1 bg-card border border-border rounded text-sm text-foreground"
-              >
-                {ep.players.name}
-              </div>
+              <UnassignedPlayer 
+                key={ep.player_id} 
+                playerId={ep.player_id}
+                playerName={ep.players.name}
+              />
             ))}
           </div>
         </div>
@@ -134,6 +132,35 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
           ))}
         </div>
       </DndContext>
+    </div>
+  );
+};
+
+interface UnassignedPlayerProps {
+  playerId: string;
+  playerName: string;
+}
+
+const UnassignedPlayer = ({ playerId, playerName }: UnassignedPlayerProps) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: playerId,
+  });
+
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: "move",
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="px-3 py-1 bg-card border border-border rounded text-sm text-foreground hover:border-primary transition-colors"
+      {...attributes}
+      {...listeners}
+    >
+      {playerName}
     </div>
   );
 };
