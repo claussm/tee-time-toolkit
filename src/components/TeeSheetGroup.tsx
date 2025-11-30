@@ -63,7 +63,7 @@ export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer }
   };
 
   return (
-    <div className="border border-border rounded-lg p-4 bg-card">
+    <div className="border border-border rounded-lg p-4 bg-card tee-sheet-group">
       <div className="mb-3">
         <h3 className="font-semibold text-foreground">Group {group.group_index}</h3>
         {isEditingTime && !isLocked ? (
@@ -153,8 +153,8 @@ const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove }: Tee
       ref={setDroppableRef}
       id={`slot-${groupId}-${position}`}
       className={`
-        min-h-[2.5rem] px-3 py-2 rounded border transition-all duration-200
-        ${assignment ? "bg-primary/5 border-primary/20" : "bg-muted/30 border-dashed border-border"}
+        min-h-[2.5rem] px-3 py-2 rounded border transition-all duration-200 tee-sheet-slot
+        ${assignment ? "bg-primary/5 border-primary/20 tee-sheet-slot-filled" : "bg-muted/30 border-dashed border-border"}
         ${isOver && !isLocked ? "border-primary bg-primary/10 scale-[1.02] shadow-sm" : ""}
         flex items-center justify-between
       `}

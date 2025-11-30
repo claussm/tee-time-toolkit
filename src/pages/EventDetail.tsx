@@ -193,6 +193,14 @@ const EventDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Print-only header */}
+      <div className="print-header hidden">
+        <h1 className="text-2xl font-bold">{event.course_name}</h1>
+        <p className="text-sm">
+          {format(parseISO(event.date + "T00:00:00"), "MMMM d, yyyy")} • {event.holes} holes • First Tee: {event.first_tee_time}
+        </p>
+      </div>
+
       <header className="border-b border-border bg-card print:hidden">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">

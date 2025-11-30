@@ -98,54 +98,60 @@ All colors MUST be HSL.
 
   .dark {
     --background: 0 0% 9%;
+
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 14%;
+    --card: 0 0% 9%;
+
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 25%;
+    --popover: 0 0% 9%;
+
     --popover-foreground: 0 0% 98%;
 
-    --primary: 158 64% 51%;
-    --primary-foreground: 165 91% 9%;
+    --primary: 161 100% 45%;
 
-    --secondary: 0 0% 45%;
+    --primary-foreground: 151 80% 95%;
+
+    --secondary: 0 0% 20%;
+
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 45%;
+    --muted: 0 0% 63%;
+
     --muted-foreground: 0 0% 98%;
 
-    --accent: 178 84% 10%;
-    --accent-foreground: 172 66% 50%;
+    --accent: 0 0% 15%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
+    --accent-foreground: 0 0% 98%;
 
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
-    --ring: 158 64% 51%;
-    --sidebar-background: 240 5.9% 10%;
+    --destructive: 0 72% 50%;
+
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+
+    --input: 0 0% 20%;
+
+    --ring: 161 100% 45%;
+
+    --sidebar-background: 0 0% 9%;
+
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 158 64% 51%;
-    --sidebar-primary-foreground: 165 91% 9%;
-    --sidebar-accent: 172 66% 50%;
-    --sidebar-accent-foreground: 178 84% 10%;
-    --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 158 64% 51%;
-    --chart-1: 156 71% 66%;
-    --chart-2: 141 76% 73%;
-    --chart-3: 170 76% 64%;
-    --chart-4: 81 84% 67%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+
+    --sidebar-primary: 161 100% 45%;
+
+    --sidebar-primary-foreground: 151 80% 95%;
+
+    --sidebar-accent: 0 0% 20%;
+
+    --sidebar-accent-foreground: 0 0% 98%;
+
+    --sidebar-border: 0 0% 20%;
+
+    --sidebar-ring: 161 100% 45%;
+
+    --sidebar: 0 0% 9%;
   }
 }
 
@@ -156,5 +162,93 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Print Styles for Tee Sheet */
+@media print {
+  /* Hide all non-essential UI elements */
+  nav, header, footer, 
+  button, .print\:hidden,
+  [role="navigation"],
+  aside, .sidebar,
+  [data-sidebar],
+  .tabs-list {
+    display: none !important;
+  }
+
+  /* Reset page margins */
+  @page {
+    margin: 0.5in;
+    size: letter portrait;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt;
+    line-height: 1.3;
+  }
+
+  /* Show print header */
+  .print-header {
+    display: block !important;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #333;
+  }
+
+  /* Optimize layout for printing */
+  .tee-sheet-print {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Make group cards stack nicely */
+  .tee-sheet-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    break-inside: avoid;
+  }
+
+  /* Group card styling */
+  .tee-sheet-group {
+    border: 1px solid #333 !important;
+    padding: 0.5rem !important;
+    background: white !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Clear slot styling */
+  .tee-sheet-slot {
+    border: 1px solid #ddd !important;
+    padding: 0.25rem 0.5rem !important;
+    margin: 0.125rem 0 !important;
+    background: white !important;
+    font-size: 10pt !important;
+  }
+
+  .tee-sheet-slot-filled {
+    background: #f5f5f5 !important;
+    border-color: #999 !important;
+  }
+
+  /* Remove shadows and transitions */
+  * {
+    box-shadow: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* Force black text */
+  h1, h2, h3, h4, h5, h6, p, span, div {
+    color: black !important;
+  }
+
+  /* Optimize spacing */
+  .space-y-6 > * + * {
+    margin-top: 0.75rem !important;
   }
 }
