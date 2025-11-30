@@ -154,7 +154,7 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="space-y-6">
+      <div className="space-y-6 tee-sheet-print">
         {!isLocked && unassignedPlayers && unassignedPlayers.length > 0 && (
           <div className="border border-border rounded-lg p-4 bg-accent/20 print:hidden">
             <h3 className="font-semibold mb-3 text-foreground">Unassigned Players</h3>
@@ -170,7 +170,7 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
           </div>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 tee-sheet-grid">
           {groups.map((group) => (
             <TeeSheetGroup
               key={group.id}
