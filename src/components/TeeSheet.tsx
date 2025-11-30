@@ -109,9 +109,17 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Parse IDs
-    const [, targetGroupId, positionStr] = overId.split("-");
-    const targetPosition = parseInt(positionStr);
+    // Parse slot ID format: "slot-{uuid-with-dashes}-{position}"
+    // We need to handle UUIDs which contain dashes
+    if (!overId.startsWith("slot-")) return;
+    
+    const withoutPrefix = overId.substring(5); // Remove "slot-"
+    const lastDashIndex = withoutPrefix.lastIndexOf("-");
+    
+    if (lastDashIndex === -1) return;
+    
+    const targetGroupId = withoutPrefix.substring(0, lastDashIndex);
+    const targetPosition = parseInt(withoutPrefix.substring(lastDashIndex + 1));
 
     movePlayerMutation.mutate({
       playerId: activeId,
