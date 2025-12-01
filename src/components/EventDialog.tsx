@@ -90,6 +90,28 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
 
         const { error: groupsError } = await supabase.from("groups").insert(groups);
         if (groupsError) throw groupsError;
+
+        // Auto-import all active players with "invited" status
+        const { data: activePlayers, error: playersError } = await supabase
+          .from("players")
+          .select("id")
+          .eq("is_active", true);
+        
+        if (playersError) throw playersError;
+
+        if (activePlayers && activePlayers.length > 0) {
+          const eventPlayers = activePlayers.map(player => ({
+            event_id: newEvent.id,
+            player_id: player.id,
+            status: "invited",
+          }));
+
+          const { error: eventPlayersError } = await supabase
+            .from("event_players")
+            .insert(eventPlayers);
+          
+          if (eventPlayersError) throw eventPlayersError;
+        }
       }
     },
     onSuccess: () => {

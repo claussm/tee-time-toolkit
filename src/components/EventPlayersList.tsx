@@ -101,9 +101,9 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const playingCount = eventPlayers?.filter((ep) => ep.status === "playing").length || 0;
+      const yesCount = eventPlayers?.filter((ep) => ep.status === "yes").length || 0;
       
-      if (status === "playing" && playingCount >= maxPlayers) {
+      if (status === "yes" && yesCount >= maxPlayers) {
         throw new Error("Max players reached. Consider setting status to waitlist.");
       }
 
@@ -122,19 +122,6 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
     },
   });
 
-  const updateRsvpMutation = useMutation({
-    mutationFn: async ({ id, rsvp_status }: { id: string; rsvp_status: string | null }) => {
-      const { error } = await supabase
-        .from("event_players")
-        .update({ rsvp_status })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["event_players", eventId] });
-      toast.success("RSVP updated");
-    },
-  });
 
   const addPlayerMutation = useMutation({
     mutationFn: async (playerId: string) => {
@@ -172,7 +159,7 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
         toAdd.map((p) => ({
           event_id: eventId,
           player_id: p.id,
-          status: "playing",
+          status: "invited",
         }))
       );
       if (insertError) throw insertError;
@@ -205,7 +192,7 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
         .from("event_players")
         .select("player_id")
         .eq("event_id", lastEventId)
-        .eq("status", "playing");
+        .eq("status", "yes");
       if (lastPlayersError) throw lastPlayersError;
 
       const alreadyAdded = eventPlayers?.map((ep) => ep.player_id) || [];
@@ -219,7 +206,7 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
         toAdd.map((p) => ({
           event_id: eventId,
           player_id: p.player_id,
-          status: "playing",
+          status: "yes",
         }))
       );
       if (insertError) throw insertError;
@@ -234,30 +221,6 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
     },
   });
 
-  const bulkAddRsvpYesMutation = useMutation({
-    mutationFn: async () => {
-      const yesPlayers = eventPlayers?.filter((ep) => ep.rsvp_status === "yes") || [];
-      
-      if (yesPlayers.length === 0) {
-        throw new Error("No players have RSVP'd yes");
-      }
-
-      const { error } = await supabase
-        .from("event_players")
-        .update({ status: "playing" })
-        .eq("event_id", eventId)
-        .eq("rsvp_status", "yes");
-      if (error) throw error;
-      return yesPlayers.length;
-    },
-    onSuccess: (count) => {
-      queryClient.invalidateQueries({ queryKey: ["event_players", eventId] });
-      toast.success(`Added ${count} players who RSVP'd yes`);
-    },
-    onError: (error: any) => {
-      toast.error(error.message);
-    },
-  });
 
   const deletePlayerMutation = useMutation({
     mutationFn: async (eventPlayerId: string) => {
@@ -290,18 +253,18 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
     }
   };
 
-  const bulkUpdateRsvpMutation = useMutation({
-    mutationFn: async (rsvpStatus: string | null) => {
+  const bulkUpdateStatusMutation = useMutation({
+    mutationFn: async (status: string) => {
       const { error } = await supabase
         .from("event_players")
-        .update({ rsvp_status: rsvpStatus })
+        .update({ status })
         .in("id", Array.from(selectedPlayers));
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["event_players", eventId] });
       setSelectedPlayers(new Set());
-      toast.success("Bulk RSVP updated");
+      toast.success("Status updated for selected players");
     },
   });
 
@@ -411,7 +374,7 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
 
   const hasUnsavedScores = Object.keys(scores).length > 0;
 
-  const playingCount = eventPlayers?.filter((ep) => ep.status === "playing").length || 0;
+  const yesCount = eventPlayers?.filter((ep) => ep.status === "yes").length || 0;
 
   return (
     <div className="space-y-4">
@@ -436,14 +399,14 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="invited">Invited</SelectItem>
-              <SelectItem value="playing">Playing</SelectItem>
+              <SelectItem value="yes">Yes</SelectItem>
               <SelectItem value="waitlist">Waitlist</SelectItem>
-              <SelectItem value="not_playing">Not Playing</SelectItem>
+              <SelectItem value="no">No</SelectItem>
             </SelectContent>
           </Select>
 
           <p className="text-sm text-muted">
-            {playingCount} / {maxPlayers} players
+            {yesCount} / {maxPlayers} players
           </p>
         </div>
 
@@ -456,17 +419,9 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => bulkAddActiveMutation.mutate()}>
-                <Users className="mr-2 h-4 w-4" />
-                Add All Active Players
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => bulkAddFromLastEventMutation.mutate()}>
                 <History className="mr-2 h-4 w-4" />
                 Add Players from Last Event
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => bulkAddRsvpYesMutation.mutate()}>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Add All RSVP Yes
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -511,23 +466,23 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
             <Button
               size="sm"
               variant="outline"
-              onClick={() => bulkUpdateRsvpMutation.mutate("yes")}
+              onClick={() => bulkUpdateStatusMutation.mutate("yes")}
             >
-              Set RSVP: Yes
+              Set Status: Yes
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => bulkUpdateRsvpMutation.mutate("no")}
+              onClick={() => bulkUpdateStatusMutation.mutate("no")}
             >
-              Set RSVP: No
+              Set Status: No
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => bulkUpdateRsvpMutation.mutate(null)}
+              onClick={() => bulkUpdateStatusMutation.mutate("invited")}
             >
-              Set RSVP: No Response
+              Set Status: Invited
             </Button>
             <Button
               size="sm"
@@ -557,7 +512,6 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
                 Points {getSortIcon("points")}
               </TableHead>
               <TableHead>6-Rnd Avg</TableHead>
-              <TableHead>RSVP</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-16"></TableHead>
             </TableRow>
@@ -566,7 +520,7 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
             {sortedAndFilteredPlayers?.map((ep) => {
               const existingScore = existingScores?.find(p => p.player_id === ep.player_id)?.points;
               const average = playerAverages?.[ep.player_id] || 0;
-              const isPlaying = ep.status === "playing";
+              const isYes = ep.status === "yes";
               
               return (
                 <TableRow key={ep.id}>
@@ -578,7 +532,7 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
                   </TableCell>
                   <TableCell className="font-medium">{ep.players.name}</TableCell>
                   <TableCell>
-                    {isPlaying ? (
+                    {isYes ? (
                       <Input
                         type="number"
                         step="0.5"
@@ -596,26 +550,6 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
                   </TableCell>
                   <TableCell>
                     <Select
-                      value={ep.rsvp_status || "no_response"}
-                      onValueChange={(value) =>
-                        updateRsvpMutation.mutate({ 
-                          id: ep.id, 
-                          rsvp_status: value === "no_response" ? null : value 
-                        })
-                      }
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no_response">No Response</SelectItem>
-                        <SelectItem value="yes">Yes</SelectItem>
-                        <SelectItem value="no">No</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
                       value={ep.status}
                       onValueChange={(value) =>
                         updateStatusMutation.mutate({ id: ep.id, status: value })
@@ -626,9 +560,9 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="invited">Invited</SelectItem>
-                        <SelectItem value="playing">Playing</SelectItem>
+                        <SelectItem value="yes">Yes</SelectItem>
                         <SelectItem value="waitlist">Waitlist</SelectItem>
-                        <SelectItem value="not_playing">Not Playing</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>

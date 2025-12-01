@@ -18,11 +18,11 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
   const { data: unassignedPlayers } = useQuery({
     queryKey: ["unassigned_players", eventId],
     queryFn: async () => {
-      const { data: playingPlayers, error } = await supabase
+      const { data, error } = await supabase
         .from("event_players")
         .select("*, players(*)")
         .eq("event_id", eventId)
-        .eq("status", "playing");
+        .eq("status", "yes");
 
       if (error) throw error;
 
@@ -33,7 +33,7 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
         });
       });
 
-      return playingPlayers.filter((ep) => !assignedIds.has(ep.player_id));
+      return data.filter((ep) => !assignedIds.has(ep.player_id));
     },
   });
 

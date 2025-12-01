@@ -30,7 +30,7 @@ export interface EventPlayer {
   id: string;
   event_id: string;
   player_id: string;
-  status: "invited" | "playing" | "not_playing" | "waitlist";
+  status: "invited" | "yes" | "no" | "waitlist";
   note?: string;
   created_at: string;
   players: Player;

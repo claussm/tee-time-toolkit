@@ -89,7 +89,7 @@ const Index = () => {
             status
           )
         `)
-        .eq("event_players.status", "playing")
+        .eq("event_players.status", "yes")
         .gte("date", today)
         .order("date")
         .limit(5);
