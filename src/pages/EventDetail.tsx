@@ -79,12 +79,12 @@ const EventDetail = () => {
 
   const autoAssignMutation = useMutation({
     mutationFn: async () => {
-      // First, get all playing players
-      const { data: playingPlayers, error: playersError } = await supabase
+      // First, get all "yes" players
+      const { data: yesPlayers, error: playersError } = await supabase
         .from("event_players")
         .select("player_id, players(*)")
         .eq("event_id", id)
-        .eq("status", "playing");
+        .eq("status", "yes");
 
       if (playersError) throw playersError;
 
@@ -102,10 +102,10 @@ const EventDetail = () => {
 
       for (const group of groups || []) {
         for (let position = 1; position <= (event?.slots_per_group || 4); position++) {
-          if (playerIndex < (playingPlayers?.length || 0)) {
+          if (playerIndex < (yesPlayers?.length || 0)) {
             assignments.push({
               group_id: group.id,
-              player_id: playingPlayers![playerIndex].player_id,
+              player_id: yesPlayers![playerIndex].player_id,
               position,
             });
             playerIndex++;

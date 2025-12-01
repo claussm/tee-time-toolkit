@@ -180,7 +180,7 @@ export default function Statistics() {
             status
           )
         `)
-        .eq("event_players.status", "playing")
+        .eq("event_players.status", "yes")
         .order("date", { ascending: false })
         .limit(5);
       if (eventsError) throw eventsError;
