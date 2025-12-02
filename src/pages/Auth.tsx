@@ -1,22 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+const loginSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+const signupSchema = z.object({
+  fullName: z.string().trim().min(1, 'Full name is required').max(100, 'Name must be less than 100 characters'),
+  email: z.string().trim().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user, role } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
+
+  const signupForm = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { fullName: '', email: '', password: '' },
+  });
 
   useEffect(() => {
     if (user && role) {
@@ -24,45 +48,45 @@ export default function Auth() {
     }
   }, [user, role, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (data: LoginFormData) => {
     setLoading(true);
-
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
-          toast({
-            title: "Login failed",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
+      const { error } = await signIn(data.email, data.password);
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignup = async (data: SignupFormData) => {
+    setLoading(true);
+    try {
+      const { error } = await signUp(data.email, data.password, data.fullName);
+      if (error) {
+        toast({
+          title: "Signup failed",
+          description: error.message,
+          variant: "destructive",
+        });
       } else {
-        if (!fullName.trim()) {
-          toast({
-            title: "Full name required",
-            description: "Please enter your full name",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-        
-        const { error } = await signUp(email, password, fullName);
-        if (error) {
-          toast({
-            title: "Signup failed",
-            description: error.message,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Account created",
-            description: "You can now log in with your credentials",
-          });
-          setIsLogin(true);
-        }
+        toast({
+          title: "Account created",
+          description: "You can now log in with your credentials",
+        });
+        setIsLogin(true);
+        signupForm.reset();
       }
     } catch (error: any) {
       toast({
@@ -91,74 +115,87 @@ export default function Auth() {
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                  <FormField
+                    control={loginForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="you@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+                </form>
+              </Form>
             </TabsContent>
             <TabsContent value="signup">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
+              <Form {...signupForm}>
+                <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
+                  <FormField
+                    control={signupForm.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input type="text" placeholder="John Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+                  <FormField
+                    control={signupForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="you@example.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
+                  <FormField
+                    control={signupForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="••••••••" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Creating account...' : 'Sign Up'}
-                </Button>
-              </form>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? 'Creating account...' : 'Sign Up'}
+                  </Button>
+                </form>
+              </Form>
             </TabsContent>
           </Tabs>
         </CardContent>
