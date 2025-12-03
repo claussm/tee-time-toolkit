@@ -50,7 +50,6 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
     mutationFn: async (data: any) => {
       // Remove joined relation data that aren't actual columns
       const { tee_boxes, player_teams, ...playerData } = data;
-      console.log('Saving to database:', playerData);
       
       if (player) {
         const { error } = await supabase
@@ -72,9 +71,6 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
   });
 
   const onSubmit = (data: any) => {
-    console.log('Form submitted with data:', data);
-    console.log('Original player:', player);
-    
     // Check if deactivating an active player
     if (player && player.is_active && data.is_active === false) {
       setPendingFormData(data);
