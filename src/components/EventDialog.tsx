@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,6 +12,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
+const eventSchema = z.object({
+  course_id: z.string().min(1, "Course is required"),
+  course_name: z.string().optional(),
+  date: z.string().min(1, "Date is required"),
+  first_tee_time: z.string().min(1, "First tee time is required"),
+  holes: z.number().min(9).max(18),
+  slots_per_group: z.number().min(2, "Minimum 2 slots per group").max(4, "Maximum 4 slots per group"),
+  max_players: z.number().min(4, "Minimum 4 players").max(100, "Maximum 100 players"),
+  tee_interval_minutes: z.number().optional(),
+  notes: z.string().trim().max(500, "Notes must be less than 500 characters").optional().or(z.literal("")),
+});
+
+type EventFormData = z.infer<typeof eventSchema>;
+
 interface EventDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -18,12 +34,17 @@ interface EventDialogProps {
 
 export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => {
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, setValue, watch } = useForm({
-    defaultValues: event || {
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<EventFormData>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      course_id: "",
+      date: "",
+      first_tee_time: "",
       holes: 18,
       slots_per_group: 4,
       max_players: 40,
       tee_interval_minutes: 8,
+      notes: "",
     },
   });
 
@@ -44,17 +65,44 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
 
   useEffect(() => {
     if (event) {
-      reset(event);
+      reset({
+        course_id: event.course_id || "",
+        date: event.date || "",
+        first_tee_time: event.first_tee_time?.slice(0, 5) || "",
+        holes: event.holes || 18,
+        slots_per_group: event.slots_per_group || 4,
+        max_players: event.max_players || 40,
+        tee_interval_minutes: event.tee_interval_minutes || 8,
+        notes: event.notes || "",
+      });
+    } else {
+      reset({
+        course_id: "",
+        date: "",
+        first_tee_time: "",
+        holes: 18,
+        slots_per_group: 4,
+        max_players: 40,
+        tee_interval_minutes: 8,
+        notes: "",
+      });
     }
   }, [event, reset]);
 
   const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: EventFormData) => {
       // Get course name for backward compatibility
       const selectedCourse = courses?.find(c => c.id === data.course_id);
       const eventData = {
-        ...data,
-        course_name: selectedCourse?.name || data.course_name,
+        course_id: data.course_id,
+        course_name: selectedCourse?.name || "",
+        date: data.date,
+        first_tee_time: data.first_tee_time,
+        holes: data.holes,
+        slots_per_group: data.slots_per_group,
+        max_players: data.max_players,
+        tee_interval_minutes: data.tee_interval_minutes || 8,
+        notes: data.notes || null,
       };
 
       if (event) {
@@ -120,9 +168,12 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
       onOpenChange(false);
       reset();
     },
+    onError: (error: any) => {
+      toast.error(error.message || "An error occurred");
+    },
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: EventFormData) => {
     saveMutation.mutate(data);
   };
 
@@ -150,6 +201,7 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
                 ))}
               </SelectContent>
             </Select>
+            {errors.course_id && <p className="text-sm text-destructive mt-1">{errors.course_id.message}</p>}
             {(!courses || courses.length === 0) && (
               <p className="text-sm text-muted-foreground mt-1">
                 No courses available. Add courses in the Courses page first.
@@ -160,12 +212,14 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="date">Date *</Label>
-              <Input id="date" type="date" {...register("date", { required: true })} />
+              <Input id="date" type="date" {...register("date")} />
+              {errors.date && <p className="text-sm text-destructive mt-1">{errors.date.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="first_tee_time">First Tee Time *</Label>
-              <Input id="first_tee_time" type="time" {...register("first_tee_time", { required: true })} />
+              <Input id="first_tee_time" type="time" {...register("first_tee_time")} />
+              {errors.first_tee_time && <p className="text-sm text-destructive mt-1">{errors.first_tee_time.message}</p>}
             </div>
           </div>
 
@@ -193,8 +247,9 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
                 type="number"
                 min="2"
                 max="4"
-                {...register("slots_per_group", { required: true, valueAsNumber: true })}
+                {...register("slots_per_group", { valueAsNumber: true })}
               />
+              {errors.slots_per_group && <p className="text-sm text-destructive mt-1">{errors.slots_per_group.message}</p>}
             </div>
 
             <div>
@@ -202,14 +257,16 @@ export const EventDialog = ({ open, onOpenChange, event }: EventDialogProps) => 
               <Input
                 id="max_players"
                 type="number"
-                {...register("max_players", { required: true, valueAsNumber: true })}
+                {...register("max_players", { valueAsNumber: true })}
               />
+              {errors.max_players && <p className="text-sm text-destructive mt-1">{errors.max_players.message}</p>}
             </div>
           </div>
 
           <div>
             <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" {...register("notes")} />
+            {errors.notes && <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>}
           </div>
 
           <div className="flex justify-end gap-2">

@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,6 +17,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
+const teamSchema = z.object({
+  name: z.string().trim().min(1, "Team name is required").max(100, "Team name must be less than 100 characters"),
+  description: z.string().trim().max(500, "Description must be less than 500 characters").optional().or(z.literal("")),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format"),
+  memberIds: z.array(z.string()),
+});
+
+type TeamFormData = z.infer<typeof teamSchema>;
+
 interface TeamDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -23,12 +34,13 @@ interface TeamDialogProps {
 
 export function TeamDialog({ open, onOpenChange, team }: TeamDialogProps) {
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, setValue, watch } = useForm({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<TeamFormData>({
+    resolver: zodResolver(teamSchema),
     defaultValues: {
       name: "",
       description: "",
       color: "#3B82F6",
-      memberIds: [] as string[],
+      memberIds: [],
     },
   });
 
@@ -49,7 +61,7 @@ export function TeamDialog({ open, onOpenChange, team }: TeamDialogProps) {
 
   useEffect(() => {
     if (team) {
-      setValue("name", team.name);
+      setValue("name", team.name || "");
       setValue("description", team.description || "");
       setValue("color", team.color || "#3B82F6");
       const existingMembers = team.player_team_members?.map((m: any) => m.player_id) || [];
@@ -60,13 +72,13 @@ export function TeamDialog({ open, onOpenChange, team }: TeamDialogProps) {
   }, [team, reset, setValue]);
 
   const saveMutation = useMutation({
-    mutationFn: async (values: any) => {
+    mutationFn: async (values: TeamFormData) => {
       if (team) {
         const { error: updateError } = await supabase
           .from("player_teams")
           .update({
             name: values.name,
-            description: values.description,
+            description: values.description || null,
             color: values.color,
           })
           .eq("id", team.id);
@@ -94,7 +106,7 @@ export function TeamDialog({ open, onOpenChange, team }: TeamDialogProps) {
           .from("player_teams")
           .insert({
             name: values.name,
-            description: values.description,
+            description: values.description || null,
             color: values.color,
           })
           .select()
@@ -121,6 +133,9 @@ export function TeamDialog({ open, onOpenChange, team }: TeamDialogProps) {
       onOpenChange(false);
       reset();
     },
+    onError: (error: any) => {
+      toast.error(error.message || "An error occurred");
+    },
   });
 
   const toggleMember = (playerId: string) => {
@@ -140,16 +155,19 @@ export function TeamDialog({ open, onOpenChange, team }: TeamDialogProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit((data) => saveMutation.mutate(data))} className="space-y-4">
           <div>
-            <Label htmlFor="name">Team Name</Label>
-            <Input id="name" {...register("name", { required: true })} />
+            <Label htmlFor="name">Team Name *</Label>
+            <Input id="name" {...register("name")} />
+            {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
           </div>
           <div>
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" {...register("description")} />
+            {errors.description && <p className="text-sm text-destructive mt-1">{errors.description.message}</p>}
           </div>
           <div>
             <Label htmlFor="color">Team Color</Label>
             <Input id="color" type="color" {...register("color")} />
+            {errors.color && <p className="text-sm text-destructive mt-1">{errors.color.message}</p>}
           </div>
           <div>
             <Label>Team Members</Label>

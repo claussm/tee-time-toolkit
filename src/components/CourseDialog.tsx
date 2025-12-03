@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,6 +12,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
+const courseSchema = z.object({
+  name: z.string().trim().min(1, "Course name is required").max(100, "Course name must be less than 100 characters"),
+  notes: z.string().trim().max(500, "Notes must be less than 500 characters").optional().or(z.literal("")),
+});
+
+type CourseFormData = z.infer<typeof courseSchema>;
+
 interface CourseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -19,8 +28,9 @@ interface CourseDialogProps {
 export function CourseDialog({ open, onOpenChange, course }: CourseDialogProps) {
   const queryClient = useQueryClient();
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [pendingData, setPendingData] = useState<any>(null);
-  const { register, handleSubmit, reset } = useForm({
+  const [pendingData, setPendingData] = useState<CourseFormData | null>(null);
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CourseFormData>({
+    resolver: zodResolver(courseSchema),
     defaultValues: {
       name: "",
       notes: "",
@@ -42,17 +52,22 @@ export function CourseDialog({ open, onOpenChange, course }: CourseDialogProps) 
   }, [course, reset]);
 
   const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CourseFormData) => {
+      const courseData = {
+        name: data.name,
+        notes: data.notes || null,
+      };
+
       if (course) {
         const { error } = await supabase
           .from("courses")
-          .update(data)
+          .update(courseData)
           .eq("id", course.id);
         if (error) throw error;
       } else {
         const { data: newCourse, error } = await supabase
           .from("courses")
-          .insert(data)
+          .insert(courseData)
           .select()
           .single();
         if (error) throw error;
@@ -86,11 +101,11 @@ export function CourseDialog({ open, onOpenChange, course }: CourseDialogProps) 
       reset();
     },
     onError: (error: any) => {
-      toast.error(error.message);
+      toast.error(error.message || "An error occurred");
     },
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: CourseFormData) => {
     setPendingData(data);
     setShowConfirmation(true);
   };
@@ -115,9 +130,10 @@ export function CourseDialog({ open, onOpenChange, course }: CourseDialogProps) 
             <Label htmlFor="name">Course Name *</Label>
             <Input
               id="name"
-              {...register("name", { required: true })}
+              {...register("name")}
               placeholder="e.g., Norman Golf Club"
             />
+            {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -128,6 +144,7 @@ export function CourseDialog({ open, onOpenChange, course }: CourseDialogProps) 
               placeholder="Any additional information about the course..."
               rows={3}
             />
+            {errors.notes && <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>}
           </div>
 
             <div className="flex justify-end gap-2">
