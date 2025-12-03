@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,6 +14,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
+const playerSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  phone: z.string().trim().max(20, "Phone must be less than 20 characters").optional().or(z.literal("")),
+  tee_box_id: z.string().nullable().optional(),
+  notes: z.string().trim().max(500, "Notes must be less than 500 characters").optional().or(z.literal("")),
+  is_active: z.boolean().optional(),
+});
+
+type PlayerFormData = z.infer<typeof playerSchema>;
+
 interface PlayerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -21,15 +33,38 @@ interface PlayerDialogProps {
 export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) => {
   const queryClient = useQueryClient();
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<any>(null);
+  const [pendingFormData, setPendingFormData] = useState<PlayerFormData | null>(null);
   
-  const { register, handleSubmit, reset, setValue, watch, control } = useForm({
-    defaultValues: player || {},
+  const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm<PlayerFormData>({
+    resolver: zodResolver(playerSchema),
+    defaultValues: {
+      name: "",
+      phone: "",
+      tee_box_id: null,
+      notes: "",
+      is_active: true,
+    },
   });
 
   useEffect(() => {
     if (open) {
-      reset(player || {});
+      if (player) {
+        reset({
+          name: player.name || "",
+          phone: player.phone || "",
+          tee_box_id: player.tee_box_id || null,
+          notes: player.notes || "",
+          is_active: player.is_active ?? true,
+        });
+      } else {
+        reset({
+          name: "",
+          phone: "",
+          tee_box_id: null,
+          notes: "",
+          is_active: true,
+        });
+      }
     }
   }, [open, player, reset]);
 
@@ -47,9 +82,14 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
   });
 
   const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
-      // Remove joined relation data that aren't actual columns
-      const { tee_boxes, player_teams, ...playerData } = data;
+    mutationFn: async (data: PlayerFormData) => {
+      const playerData = {
+        name: data.name,
+        phone: data.phone || null,
+        tee_box_id: data.tee_box_id || null,
+        notes: data.notes || null,
+        is_active: data.is_active ?? true,
+      };
       
       if (player) {
         const { error } = await supabase
@@ -68,9 +108,12 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
       onOpenChange(false);
       reset();
     },
+    onError: (error: any) => {
+      toast.error(error.message || "An error occurred");
+    },
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: PlayerFormData) => {
     // Check if deactivating an active player
     if (player && player.is_active && data.is_active === false) {
       setPendingFormData(data);
@@ -106,7 +149,8 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <Label htmlFor="name">Name *</Label>
-              <Input id="name" {...register("name", { required: true })} />
+              <Input id="name" {...register("name")} />
+              {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
             </div>
 
             <div>
@@ -117,6 +161,7 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
                 placeholder="(843) 555-1234"
                 {...register("phone")}
               />
+              {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>}
             </div>
 
             <div>
@@ -148,6 +193,7 @@ export const PlayerDialog = ({ open, onOpenChange, player }: PlayerDialogProps) 
             <div>
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" {...register("notes")} />
+              {errors.notes && <p className="text-sm text-destructive mt-1">{errors.notes.message}</p>}
             </div>
 
             {player && (
