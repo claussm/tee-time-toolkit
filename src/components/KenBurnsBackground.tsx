@@ -49,13 +49,9 @@ export const KenBurnsBackground = () => {
   }, [currentIndex, getNextRandomIndex]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
-      {/* Current image with Ken Burns zoom */}
-      <div
-        className={`absolute inset-0 transition-opacity duration-[1500ms] ease-in-out ${
-          isTransitioning ? "opacity-0" : "opacity-100"
-        }`}
-      >
+    <div className="fixed inset-0 overflow-hidden bg-black">
+      {/* Current image - always visible as base layer */}
+      <div className="absolute inset-0">
         <img
           key={`current-${currentIndex}`}
           src={courseImages[currentIndex]}
@@ -64,7 +60,7 @@ export const KenBurnsBackground = () => {
         />
       </div>
 
-      {/* Next image fading in */}
+      {/* Next image fading in on top */}
       {nextIndex !== null && (
         <div
           className={`absolute inset-0 transition-opacity duration-[1500ms] ease-in-out ${
