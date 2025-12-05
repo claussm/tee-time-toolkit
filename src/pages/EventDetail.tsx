@@ -142,42 +142,20 @@ const EventDetail = () => {
 
       if (clearError) throw clearError;
 
-      // Snake draft assignment for balanced groups
+      // Fill-first assignment: fill each group completely before moving to the next
       const assignments = [];
       const slotsPerGroup = event?.slots_per_group || 4;
-      const numGroups = groups?.length || 0;
+      const sortedGroups = [...(groups || [])].sort((a, b) => a.group_index - b.group_index);
       
       let playerIndex = 0;
-      let groupIndex = 0;
-      let forward = true;
-
-      while (playerIndex < sortedPlayers.length) {
-        const group = groups![groupIndex];
-        const position = Math.floor(playerIndex / numGroups) + 1;
-
-        if (position <= slotsPerGroup) {
+      for (const group of sortedGroups) {
+        for (let position = 1; position <= slotsPerGroup && playerIndex < sortedPlayers.length; position++) {
           assignments.push({
             group_id: group.id,
             player_id: sortedPlayers[playerIndex].player_id,
             position,
           });
-        }
-
-        playerIndex++;
-
-        // Snake draft: alternate direction at the end of each round
-        if (forward) {
-          groupIndex++;
-          if (groupIndex >= numGroups) {
-            groupIndex = numGroups - 1;
-            forward = false;
-          }
-        } else {
-          groupIndex--;
-          if (groupIndex < 0) {
-            groupIndex = 0;
-            forward = true;
-          }
+          playerIndex++;
         }
       }
 
