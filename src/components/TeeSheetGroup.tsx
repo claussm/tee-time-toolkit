@@ -13,9 +13,10 @@ interface TeeSheetGroupProps {
   isLocked: boolean;
   slotsPerGroup: number;
   onRemovePlayer: (playerId: string) => void;
+  className?: string;
 }
 
-export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer }: TeeSheetGroupProps) => {
+export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer, className = "" }: TeeSheetGroupProps) => {
   const slots = Array.from({ length: slotsPerGroup }, (_, i) => i + 1);
   const queryClient = useQueryClient();
   const [isEditingTime, setIsEditingTime] = useState(false);
@@ -63,7 +64,7 @@ export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer }
   };
 
   return (
-    <div className="border border-border rounded-lg p-4 bg-card tee-sheet-group">
+    <div className={`border border-border rounded-lg p-4 bg-card tee-sheet-group ${className}`}>
       <div className="mb-3">
         <h3 className="font-semibold text-foreground">Group {group.group_index}</h3>
         {isEditingTime && !isLocked ? (
@@ -167,9 +168,15 @@ const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove }: Tee
           {...attributes}
           {...listeners}
         >
-          <span className="text-sm font-medium text-foreground">
-            {assignment.players?.name}
-          </span>
+          <div className="flex-1">
+            <span className="text-sm font-medium text-foreground">
+              {assignment.players?.name}
+            </span>
+            {/* Print-only score entry line */}
+            <div className="hidden print:block mt-1 border-b border-dashed border-muted text-xs text-muted-foreground">
+              Score: ________
+            </div>
+          </div>
           {!isLocked && (
             <Button
               variant="ghost"
@@ -185,7 +192,7 @@ const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove }: Tee
           )}
         </div>
       ) : (
-        <span className="text-sm text-muted">Empty</span>
+        <span className="text-sm text-muted print:hidden">Empty</span>
       )}
     </div>
   );

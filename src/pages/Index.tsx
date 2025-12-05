@@ -201,8 +201,11 @@ const Index = () => {
                       key={event.id}
                       className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors"
                     >
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground truncate">
+                      <div 
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => navigate(`/events/${event.id}`)}
+                      >
+                        <h3 className="font-semibold text-foreground truncate hover:text-primary transition-colors">
                           {event.course_name}
                         </h3>
                         <p className="text-sm text-muted-foreground">

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Users, History, CheckCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Save } from "lucide-react";
+import { Plus, Users, History, CheckCircle, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Save, Trophy } from "lucide-react";
+import { PlayerPointsDialog } from "@/components/PlayerPointsDialog";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -31,6 +32,8 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
   const [sortField, setSortField] = useState<SortField>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [scores, setScores] = useState<Record<string, string>>({});
+  const [pointsDialogOpen, setPointsDialogOpen] = useState(false);
+  const [selectedPlayerForHistory, setSelectedPlayerForHistory] = useState<any>(null);
 
   const { data: eventPlayers } = useQuery({
     queryKey: ["event_players", eventId],
@@ -351,6 +354,9 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
       statusFilter === "all" || ep.status === statusFilter
     ) || [];
 
+    // Default sort by status: yes -> invited -> waitlist -> no
+    const statusOrder: Record<string, number> = { yes: 1, invited: 2, waitlist: 3, no: 4 };
+    
     if (sortField === "name") {
       filtered = [...filtered].sort((a, b) => {
         const nameA = a.players.name.toLowerCase();
@@ -366,6 +372,11 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
         return sortDirection === "asc" 
           ? pointsA - pointsB
           : pointsB - pointsA;
+      });
+    } else {
+      // Default: sort by status
+      filtered = [...filtered].sort((a, b) => {
+        return (statusOrder[a.status] || 5) - (statusOrder[b.status] || 5);
       });
     }
 
@@ -513,6 +524,7 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
               </TableHead>
               <TableHead>6-Rnd Avg</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-16">History</TableHead>
               <TableHead className="w-16"></TableHead>
             </TableRow>
           </TableHeader>
@@ -570,6 +582,18 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => {
+                        setSelectedPlayerForHistory(ep.players);
+                        setPointsDialogOpen(true);
+                      }}
+                    >
+                      <Trophy className="h-4 w-4 text-primary" />
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleDeleteClick(ep.id, ep.players.name)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -601,6 +625,12 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PlayerPointsDialog
+        open={pointsDialogOpen}
+        onOpenChange={setPointsDialogOpen}
+        player={selectedPlayerForHistory}
+      />
     </div>
   );
 };

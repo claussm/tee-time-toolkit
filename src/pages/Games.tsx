@@ -18,12 +18,17 @@ const Games = () => {
         .from("events")
         .select(`
           *,
-          event_players(count)
+          event_players(player_id, status)
         `)
         .order("date", { ascending: false });
 
       if (error) throw error;
-      return data;
+      
+      // Count only "yes" players
+      return data.map(event => ({
+        ...event,
+        yesPlayerCount: event.event_players?.filter((ep: any) => ep.status === "yes").length || 0
+      }));
     },
   });
 
@@ -73,7 +78,7 @@ const Games = () => {
                           {event.is_locked ? "🔒 Locked" : "📝 Open"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {event.event_players[0]?.count || 0} players
+                          {event.yesPlayerCount} players
                         </p>
                       </div>
                     </div>

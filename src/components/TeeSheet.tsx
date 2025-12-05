@@ -171,15 +171,19 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
         )}
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 tee-sheet-grid">
-          {groups.map((group) => (
-            <TeeSheetGroup
-              key={group.id}
-              group={group}
-              isLocked={isLocked}
-              slotsPerGroup={slotsPerGroup}
-              onRemovePlayer={removePlayerMutation.mutate}
-            />
-          ))}
+          {groups.map((group) => {
+            const hasPlayers = group.group_assignments && group.group_assignments.length > 0;
+            return (
+              <TeeSheetGroup
+                key={group.id}
+                group={group}
+                isLocked={isLocked}
+                slotsPerGroup={slotsPerGroup}
+                onRemovePlayer={removePlayerMutation.mutate}
+                className={!hasPlayers ? "print:hidden" : ""}
+              />
+            );
+          })}
         </div>
       </div>
     </DndContext>

@@ -36,11 +36,16 @@ export const PlayerPointsDialog = ({ open, onOpenChange, player }: PlayerPointsD
             course_name
           )
         `)
-        .eq("player_id", player.id)
-        .order("created_at", { ascending: false });
+        .eq("player_id", player.id);
       
       if (error) throw error;
-      return data;
+      
+      // Sort by event date descending (most recent first)
+      return data.sort((a, b) => {
+        const dateA = a.events?.date || "";
+        const dateB = b.events?.date || "";
+        return dateB.localeCompare(dateA);
+      });
     },
     enabled: open && !!player?.id,
   });
@@ -149,10 +154,17 @@ export const PlayerPointsDialog = ({ open, onOpenChange, player }: PlayerPointsD
               </TableRow>
             </TableHeader>
             <TableBody>
-              {scores.map((score: any) => (
-                <TableRow key={score.id}>
+              {scores.map((score: any, index: number) => {
+                const countsTowardAverage = index < 6;
+                return (
+                <TableRow key={score.id} className={!countsTowardAverage ? "opacity-50" : ""}>
                   <TableCell className="font-medium">
-                    {score.events ? format(new Date(score.events.date), "MMM d, yyyy") : "N/A"}
+                    <div className="flex items-center gap-2">
+                      {score.events ? format(new Date(score.events.date), "MMM d, yyyy") : "N/A"}
+                      {countsTowardAverage && (
+                        <span className="text-xs text-primary font-medium">★</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>{score.events?.course_name || "N/A"}</TableCell>
                   <TableCell>
@@ -210,7 +222,8 @@ export const PlayerPointsDialog = ({ open, onOpenChange, player }: PlayerPointsD
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
             </TableBody>
           </Table>
         ) : (
