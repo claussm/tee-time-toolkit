@@ -6,21 +6,29 @@ import { X, Clock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { PlayerStat, getGroupScoreToBeat, getPlayerScoreToBeat } from "@/lib/utils";
 
 interface TeeSheetGroupProps {
   group: any;
   isLocked: boolean;
   slotsPerGroup: number;
   onRemovePlayer: (playerId: string) => void;
+  playerStats: Record<string, PlayerStat>;
   className?: string;
 }
 
-export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer, className = "" }: TeeSheetGroupProps) => {
+export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer, playerStats, className = "" }: TeeSheetGroupProps) => {
   const slots = Array.from({ length: slotsPerGroup }, (_, i) => i + 1);
   const queryClient = useQueryClient();
   const [isEditingTime, setIsEditingTime] = useState(false);
   const [editedTime, setEditedTime] = useState(group.tee_time.substring(0, 5));
+
+  // Calculate group score to beat
+  const groupScoreToBeat = useMemo(() => {
+    const playerIds = (group.group_assignments || []).map((a: any) => a.player_id);
+    return getGroupScoreToBeat(playerIds, playerStats);
+  }, [group.group_assignments, playerStats]);
 
   const updateTeeTimeMutation = useMutation({
     mutationFn: async (newTime: string) => {
@@ -66,7 +74,14 @@ export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer, 
   return (
     <div className={`border border-border rounded-lg p-4 bg-card tee-sheet-group ${className}`}>
       <div className="mb-3">
-        <h3 className="font-semibold text-foreground">Group {group.group_index}</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-foreground">Group {group.group_index}</h3>
+          {groupScoreToBeat && (
+            <span className="text-sm font-medium text-muted-foreground">
+              Group STB: {groupScoreToBeat}
+            </span>
+          )}
+        </div>
         {isEditingTime && !isLocked ? (
           <div className="flex items-center gap-2 mt-1">
             <Input
@@ -99,7 +114,7 @@ export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer, 
       <div className="space-y-2">
         {slots.map((position) => {
           const assignment = group.group_assignments?.find((a: any) => a.position === position);
-          
+
           return (
             <TeeSheetSlot
               key={`${group.id}-${position}`}
@@ -108,6 +123,7 @@ export const TeeSheetGroup = ({ group, isLocked, slotsPerGroup, onRemovePlayer, 
               assignment={assignment}
               isLocked={isLocked}
               onRemove={onRemovePlayer}
+              playerStats={playerStats}
             />
           );
         })}
@@ -122,9 +138,15 @@ interface TeeSheetSlotProps {
   assignment?: any;
   isLocked: boolean;
   onRemove: (playerId: string) => void;
+  playerStats: Record<string, PlayerStat>;
 }
 
-const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove }: TeeSheetSlotProps) => {
+const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove, playerStats }: TeeSheetSlotProps) => {
+  // Get player's score to beat
+  const scoreToBeat = assignment?.player_id
+    ? getPlayerScoreToBeat(playerStats[assignment.player_id])
+    : null;
+
   // Droppable slot
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `slot-${groupId}-${position}`,
@@ -132,12 +154,12 @@ const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove }: Tee
   });
 
   // Draggable player (if assigned)
-  const { 
-    attributes, 
-    listeners, 
-    setNodeRef: setDraggableRef, 
-    transform, 
-    isDragging 
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableRef,
+    transform,
+    isDragging
   } = useDraggable({
     id: assignment?.player_id || `empty-${groupId}-${position}`,
     disabled: isLocked || !assignment,
@@ -169,9 +191,16 @@ const TeeSheetSlot = ({ groupId, position, assignment, isLocked, onRemove }: Tee
           {...listeners}
         >
           <div className="flex-1">
-            <span className="text-sm font-medium text-foreground">
-              {assignment.players?.name}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-foreground">
+                {assignment.players?.name}
+              </span>
+              {scoreToBeat && (
+                <span className="text-xs text-muted-foreground font-normal">
+                  ({scoreToBeat})
+                </span>
+              )}
+            </div>
             {/* Print-only score entry line */}
             <div className="hidden print:block mt-1 border-b border-dashed border-muted text-xs text-muted-foreground">
               Score: ________
