@@ -63,6 +63,57 @@ const EventDetail = () => {
     },
   });
 
+  // Fetch player stats (6-game averages) for all assigned players
+  const { data: playerStats } = useQuery({
+    queryKey: ["player-stats-for-event", id],
+    queryFn: async () => {
+      if (!groups || groups.length === 0) return {};
+
+      // Collect all unique player IDs from groups
+      const playerIds = new Set<string>();
+      groups.forEach(group => {
+        group.group_assignments?.forEach((assignment: any) => {
+          playerIds.add(assignment.player_id);
+        });
+      });
+
+      if (playerIds.size === 0) return {};
+
+      // Fetch stats for each player
+      const statsPromises = Array.from(playerIds).map(async (playerId) => {
+        const { data: scores, error } = await supabase
+          .from("round_scores")
+          .select("points")
+          .eq("player_id", playerId)
+          .order("created_at", { ascending: false })
+          .limit(6);
+
+        if (error) {
+          console.error("Error fetching scores for player:", playerId, error);
+          return { playerId, average: 0, roundsPlayed: 0 };
+        }
+
+        const roundsPlayed = scores?.length || 0;
+        const average = roundsPlayed > 0
+          ? scores.reduce((sum, s) => sum + Number(s.points), 0) / roundsPlayed
+          : 0;
+
+        return { playerId, average, roundsPlayed };
+      });
+
+      const stats = await Promise.all(statsPromises);
+
+      // Convert to map for easy lookup: playerId -> stats
+      const statsMap: Record<string, { average: number; roundsPlayed: number }> = {};
+      stats.forEach(stat => {
+        statsMap[stat.playerId] = { average: stat.average, roundsPlayed: stat.roundsPlayed };
+      });
+
+      return statsMap;
+    },
+    enabled: !!groups && groups.length > 0,
+  });
+
   const lockMutation = useMutation({
     mutationFn: async (locked: boolean) => {
       const { error } = await supabase
@@ -337,6 +388,7 @@ const EventDetail = () => {
                 groups={groups || []}
                 isLocked={event.is_locked}
                 slotsPerGroup={event.slots_per_group}
+                playerStats={playerStats || {}}
               />
             </TabsContent>
           )}
@@ -348,6 +400,7 @@ const EventDetail = () => {
             groups={groups || []}
             isLocked={true}
             slotsPerGroup={event.slots_per_group}
+            playerStats={playerStats || {}}
           />
         </div>
       </main>

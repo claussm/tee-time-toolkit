@@ -3,15 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors, useDraggable } from "@dnd-kit/core";
 import { TeeSheetGroup } from "./TeeSheetGroup";
 import { toast } from "sonner";
+import { PlayerStat } from "@/lib/utils";
 
 interface TeeSheetProps {
   eventId: string;
   groups: any[];
   isLocked: boolean;
   slotsPerGroup: number;
+  playerStats: Record<string, PlayerStat>;
 }
 
-export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetProps) => {
+export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup, playerStats }: TeeSheetProps) => {
   const queryClient = useQueryClient();
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -180,6 +182,7 @@ export const TeeSheet = ({ eventId, groups, isLocked, slotsPerGroup }: TeeSheetP
                 isLocked={isLocked}
                 slotsPerGroup={slotsPerGroup}
                 onRemovePlayer={removePlayerMutation.mutate}
+                playerStats={playerStats}
                 className={!hasPlayers ? "print:hidden" : ""}
               />
             );
