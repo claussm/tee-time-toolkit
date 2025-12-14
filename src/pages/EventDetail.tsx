@@ -9,6 +9,7 @@ import { ArrowLeft, Lock, Unlock, FileText, Trash2, Pencil } from "lucide-react"
 import { EventPlayersList } from "@/components/EventPlayersList";
 import { TeeSheet } from "@/components/TeeSheet";
 import { EventDialog } from "@/components/EventDialog";
+import { RsvpManager } from "@/components/RsvpManager";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import {
@@ -356,8 +357,9 @@ const EventDetail = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="print:hidden">
           {role === "admin" && (
-            <TabsList className="grid w-full max-w-xl grid-cols-2">
+            <TabsList className="grid w-full max-w-xl grid-cols-3">
               <TabsTrigger value="players">Players</TabsTrigger>
+              <TabsTrigger value="rsvp">RSVP</TabsTrigger>
               <TabsTrigger value="teesheet">Tee Sheet</TabsTrigger>
             </TabsList>
           )}
@@ -365,6 +367,12 @@ const EventDetail = () => {
           <TabsContent value="players" className="mt-6">
             <EventPlayersList eventId={id!} maxPlayers={event.max_players} />
           </TabsContent>
+
+          {role === "admin" && (
+            <TabsContent value="rsvp" className="mt-6">
+              <RsvpManager eventId={id!} event={event} />
+            </TabsContent>
+          )}
 
           {role === "admin" && (
             <TabsContent value="teesheet" className="mt-6">

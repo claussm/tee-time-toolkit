@@ -389,6 +389,7 @@ export type Database = {
         Row: {
           created_at: string
           default_team_id: string | null
+          email: string | null
           handicap: number | null
           id: string
           is_active: boolean
@@ -401,6 +402,7 @@ export type Database = {
         Insert: {
           created_at?: string
           default_team_id?: string | null
+          email?: string | null
           handicap?: number | null
           id?: string
           is_active?: boolean
@@ -413,6 +415,7 @@ export type Database = {
         Update: {
           created_at?: string
           default_team_id?: string | null
+          email?: string | null
           handicap?: number | null
           id?: string
           is_active?: boolean
@@ -546,6 +549,129 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rsvp_templates: {
+        Row: {
+          id: string
+          name: string
+          subject: string | null
+          body: string
+          channel: "email" | "sms" | "both"
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          subject?: string | null
+          body: string
+          channel?: "email" | "sms" | "both"
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          subject?: string | null
+          body?: string
+          channel?: "email" | "sms" | "both"
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rsvp_messages: {
+        Row: {
+          id: string
+          event_player_id: string
+          template_id: string | null
+          channel: "email" | "sms"
+          recipient: string
+          status: "pending" | "sent" | "delivered" | "failed" | "bounced"
+          response_token: string | null
+          external_id: string | null
+          error_message: string | null
+          sent_at: string | null
+          delivered_at: string | null
+          responded_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_player_id: string
+          template_id?: string | null
+          channel: "email" | "sms"
+          recipient: string
+          status?: "pending" | "sent" | "delivered" | "failed" | "bounced"
+          response_token?: string | null
+          external_id?: string | null
+          error_message?: string | null
+          sent_at?: string | null
+          delivered_at?: string | null
+          responded_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_player_id?: string
+          template_id?: string | null
+          channel?: "email" | "sms"
+          recipient?: string
+          status?: "pending" | "sent" | "delivered" | "failed" | "bounced"
+          response_token?: string | null
+          external_id?: string | null
+          error_message?: string | null
+          sent_at?: string | null
+          delivered_at?: string | null
+          responded_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvp_messages_event_player_id_fkey"
+            columns: ["event_player_id"]
+            isOneToOne: false
+            referencedRelation: "event_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rsvp_messages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "rsvp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rsvp_settings: {
+        Row: {
+          id: string
+          setting_key: string
+          setting_value: string | null
+          is_encrypted: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          setting_key: string
+          setting_value?: string | null
+          is_encrypted?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          setting_key?: string
+          setting_value?: string | null
+          is_encrypted?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       tee_boxes: {
         Row: {
