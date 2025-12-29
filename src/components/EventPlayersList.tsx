@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Users, History, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Save, Trophy, Mail, Send, CheckCircle2, Clock } from "lucide-react";
+import { Plus, Users, History, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Save, Trophy, Mail, Send, CheckCircle2, Clock, RotateCcw } from "lucide-react";
 import { PlayerPointsDialog } from "@/components/PlayerPointsDialog";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -258,6 +258,23 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
       deletePlayerMutation.mutate(playerToDelete.id);
     }
   };
+
+  const resetInviteMutation = useMutation({
+    mutationFn: async (eventPlayerId: string) => {
+      const { error } = await supabase
+        .from("event_players")
+        .update({ invite_sent_at: null, responded_at: null, status: "invited" })
+        .eq("id", eventPlayerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["event_players", eventId] });
+      toast.success("Invite reset - player is ready for next batch send");
+    },
+    onError: (error: any) => {
+      toast.error("Failed to reset invite: " + error.message);
+    },
+  });
 
   const bulkUpdateStatusMutation = useMutation({
     mutationFn: async (status: string) => {
@@ -600,12 +617,28 @@ export const EventPlayersList = ({ eventId, maxPlayers }: EventPlayersListProps)
                           <TooltipContent>Responded via email</TooltipContent>
                         </Tooltip>
                       ) : ep.invite_sent_at ? (
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Mail className="h-4 w-4 text-blue-500" />
-                          </TooltipTrigger>
-                          <TooltipContent>Invite sent</TooltipContent>
-                        </Tooltip>
+                        <div className="flex items-center gap-1">
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Mail className="h-4 w-4 text-blue-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>Invite sent</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => resetInviteMutation.mutate(ep.id)}
+                                disabled={resetInviteMutation.isPending}
+                              >
+                                <RotateCcw className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Reset invite to resend</TooltipContent>
+                          </Tooltip>
+                        </div>
                       ) : ep.players?.email ? (
                         <Tooltip>
                           <TooltipTrigger>
