@@ -115,7 +115,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader 
-        title="Barefoot Tees"
+        title="Tee Time Toolkit"
         subtitle="Organize players, events, and tee times with ease"
       />
 
