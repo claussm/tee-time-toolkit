@@ -105,7 +105,7 @@ export default function Auth() {
       <KenBurnsBackground />
       <Card className="w-full max-w-md relative z-10 bg-card/95 backdrop-blur-sm shadow-2xl">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Golf League Manager</CardTitle>
+          <CardTitle className="text-2xl">Tee Time Toolkit</CardTitle>
           <CardDescription>
             {isLogin ? 'Sign in to your account' : 'Create a new account'}
           </CardDescription>

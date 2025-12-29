@@ -34,7 +34,7 @@ function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className={isCollapsed ? "opacity-0" : ""}>
-            Golf League Manager
+            Tee Time Toolkit
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -71,8 +71,7 @@ function AppSidebar() {
           </div>
           {!isCollapsed && (
             <div className="px-4 pb-4 text-xs text-muted-foreground text-center border-t pt-4">
-              Barefoot Resort Clubhouse<br />
-              (843) 390-3200
+              Tee Time Toolkit
             </div>
           )}
         </div>
