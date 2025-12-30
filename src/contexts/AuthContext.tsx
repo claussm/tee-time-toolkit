@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 type AppRole = 'admin' | 'scorer';
 
@@ -23,18 +24,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const hasShownExpiryToast = useRef(false);
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, currentSession) => {
+        console.log('Auth event:', event);
         
-        if (session?.user) {
+        // Handle session expiry/logout
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setRole(null);
+          
+          // Only show toast if we had a session before (actual expiry, not initial load)
+          if (!hasShownExpiryToast.current && session) {
+            hasShownExpiryToast.current = true;
+            toast.error('Your session has expired. Please sign in again.');
+            navigate('/auth');
+          }
+          return;
+        }
+        
+        // Reset the toast flag on successful sign in
+        if (event === 'SIGNED_IN') {
+          hasShownExpiryToast.current = false;
+        }
+        
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (currentSession?.user) {
           // Fetch user role in a deferred way to avoid blocking
           setTimeout(() => {
-            fetchUserRole(session.user.id);
+            fetchUserRole(currentSession.user.id);
           }, 0);
         } else {
           setRole(null);
@@ -43,17 +67,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
       
-      if (session?.user) {
-        fetchUserRole(session.user.id);
+      if (existingSession?.user) {
+        fetchUserRole(existingSession.user.id);
       }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
+  }, [navigate, session]);
+
+  // Listen for auth errors dispatched from React Query
+  useEffect(() => {
+    const handleAuthError = () => {
+      console.log('Auth error detected, signing out...');
+      supabase.auth.signOut();
+    };
+    
+    window.addEventListener('auth-error', handleAuthError);
+    return () => window.removeEventListener('auth-error', handleAuthError);
   }, []);
 
   const fetchUserRole = async (userId: string) => {
