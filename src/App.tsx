@@ -17,7 +17,42 @@ import ScorerDashboard from "./pages/ScorerDashboard";
 import RsvpResponse from "./pages/RsvpResponse";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+// Helper to check if an error is auth-related
+const isAuthError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const err = error as { code?: string; message?: string };
+  return (
+    err.code === 'PGRST301' ||
+    err.code === '401' ||
+    err.code === '403' ||
+    err.message?.includes('JWT') ||
+    err.message?.includes('session') ||
+    err.message?.includes('token') ||
+    err.message?.includes('not authenticated')
+  );
+};
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Don't retry on auth errors
+        if (isAuthError(error)) {
+          window.dispatchEvent(new CustomEvent('auth-error'));
+          return false;
+        }
+        return failureCount < 3;
+      },
+    },
+    mutations: {
+      onError: (error) => {
+        if (isAuthError(error)) {
+          window.dispatchEvent(new CustomEvent('auth-error'));
+        }
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
