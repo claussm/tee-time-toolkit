@@ -14,7 +14,7 @@ import Statistics from "./pages/Statistics";
 import EventDetail from "./pages/EventDetail";
 import Auth from "./pages/Auth";
 import ScorerDashboard from "./pages/ScorerDashboard";
-import RsvpResponse from "./pages/RsvpResponse";
+
 import NotFound from "./pages/NotFound";
 
 // Helper to check if an error is auth-related
@@ -115,7 +115,7 @@ const App = () => (
             />
             <Route path="/events/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
             <Route path="/scorer" element={<ProtectedRoute requiredRole="scorer"><ScorerDashboard /></ProtectedRoute>} />
-            <Route path="/rsvp/:token" element={<RsvpResponse />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
