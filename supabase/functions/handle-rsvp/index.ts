@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -6,7 +5,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+// Helper to create HTML response headers that work with Supabase edge runtime
+function createHtmlHeaders(): Headers {
+  const headers = new Headers();
+  headers.set("access-control-allow-origin", "*");
+  headers.set("access-control-allow-headers", "authorization, x-client-info, apikey, content-type");
+  headers.set("content-type", "text/html; charset=utf-8");
+  headers.set("cache-control", "no-store");
+  return headers;
+}
+
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -51,7 +60,7 @@ serve(async (req) => {
           title: "Invalid Link",
           message: "This RSVP link is invalid or has expired. Please contact the event organizer.",
         }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "text/html" } }
+        { status: 404, headers: createHtmlHeaders() }
       );
     }
 
@@ -72,7 +81,7 @@ serve(async (req) => {
             holes: event.holes,
           },
         }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "text/html" } }
+        { status: 200, headers: createHtmlHeaders() }
       );
     }
 
@@ -107,7 +116,7 @@ serve(async (req) => {
         },
         isYes,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "text/html" } }
+      { status: 200, headers: createHtmlHeaders() }
     );
   } catch (error: any) {
     console.error("Error in handle-rsvp:", error);
@@ -117,7 +126,7 @@ serve(async (req) => {
         title: "Something Went Wrong",
         message: error.message || "An error occurred processing your response. Please try again or contact the event organizer.",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "text/html" } }
+      { status: 500, headers: createHtmlHeaders() }
     );
   }
 });
@@ -153,128 +162,125 @@ interface HtmlResponseParams {
 }
 
 function generateHtmlResponse({ success, title, message, eventDetails, isYes }: HtmlResponseParams): string {
-  const bgColor = success ? (isYes ? "#22c55e" : "#ef4444") : "#f59e0b";
   const headerBg = success ? (isYes ? "#16a34a" : "#dc2626") : "#d97706";
   
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${title} - Golf League RSVP</title>
-      <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-          background-color: #f4f4f5;
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-        }
-        .container {
-          background: white;
-          border-radius: 16px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-          max-width: 480px;
-          width: 100%;
-          overflow: hidden;
-        }
-        .header {
-          background: ${headerBg};
-          color: white;
-          padding: 32px 24px;
-          text-align: center;
-        }
-        .header h1 {
-          font-size: 28px;
-          font-weight: 700;
-          margin-bottom: 8px;
-        }
-        .content {
-          padding: 32px 24px;
-        }
-        .message {
-          font-size: 16px;
-          line-height: 1.6;
-          color: #3f3f46;
-          margin-bottom: 24px;
-        }
-        .event-details {
-          background: #f4f4f5;
-          border-radius: 12px;
-          padding: 20px;
-        }
-        .event-details h3 {
-          font-size: 14px;
-          font-weight: 600;
-          color: #71717a;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 16px;
-        }
-        .detail-row {
-          display: flex;
-          justify-content: space-between;
-          padding: 8px 0;
-          border-bottom: 1px solid #e4e4e7;
-        }
-        .detail-row:last-child {
-          border-bottom: none;
-        }
-        .detail-label {
-          color: #71717a;
-          font-size: 14px;
-        }
-        .detail-value {
-          color: #18181b;
-          font-weight: 500;
-          font-size: 14px;
-        }
-        .golf-icon {
-          font-size: 48px;
-          margin-bottom: 8px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <div class="golf-icon">🏌️</div>
-          <h1>${title}</h1>
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title} - Golf League RSVP</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f4f4f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      max-width: 480px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .header {
+      background: ${headerBg};
+      color: white;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .content {
+      padding: 32px 24px;
+    }
+    .message {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #3f3f46;
+      margin-bottom: 24px;
+    }
+    .event-details {
+      background: #f4f4f5;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .event-details h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #71717a;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e4e4e7;
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    .detail-label {
+      color: #71717a;
+      font-size: 14px;
+    }
+    .detail-value {
+      color: #18181b;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .golf-icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="golf-icon">🏌️</div>
+      <h1>${title}</h1>
+    </div>
+    <div class="content">
+      <p class="message">${message}</p>
+      ${eventDetails ? `
+        <div class="event-details">
+          <h3>Event Details</h3>
+          <div class="detail-row">
+            <span class="detail-label">Course</span>
+            <span class="detail-value">${eventDetails.course}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Date</span>
+            <span class="detail-value">${eventDetails.date}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">First Tee Time</span>
+            <span class="detail-value">${eventDetails.teeTime}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Format</span>
+            <span class="detail-value">${eventDetails.holes} Holes</span>
+          </div>
         </div>
-        <div class="content">
-          <p class="message">${message}</p>
-          ${eventDetails ? `
-            <div class="event-details">
-              <h3>Event Details</h3>
-              <div class="detail-row">
-                <span class="detail-label">Course</span>
-                <span class="detail-value">${eventDetails.course}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Date</span>
-                <span class="detail-value">${eventDetails.date}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">First Tee Time</span>
-                <span class="detail-value">${eventDetails.teeTime}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Format</span>
-                <span class="detail-value">${eventDetails.holes} Holes</span>
-              </div>
-            </div>
-          ` : ""}
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
+      ` : ""}
+    </div>
+  </div>
+</body>
+</html>`;
 }
